@@ -1,6 +1,6 @@
 # Calculatrice Pro
 
-Application de bureau pour Windows avec une interface moderne (thème sombre ou clair) :
+Application de bureau pour Windows avec une interface moderne et fluide (Qt) : thème sombre ou clair, animations au survol et au clic, transitions entre les pages, défilement doux, et une mise en page qui s'adapte à toutes les tailles de fenêtre, plein écran compris.
 
 - **Calculatrice scientifique** : trigonométrie (DEG / RAD / GRAD) et fonctions réciproques (touche `2nd`), fonctions hyperboliques, `ln`, `log`, `log₂`, puissances et racines, factorielle, `nCr` / `nPr`, `mod`, valeur absolue, notation `EXP`, pourcentages (`200+10%` donne 220), mémoire (`MC`, `MR`, `M+`, `M−`), `Ans`, aperçu du résultat pendant la saisie et historique cliquable conservé d'une session à l'autre.
 - **Taux de change** : plus de 160 devises avec les taux du jour, recherche par code ou par nom (« dollar », « MAD »…), liste de devises favorites et graphique d'évolution sur 1 semaine, 1, 3 ou 6 mois, ou 1 an.
@@ -46,7 +46,7 @@ Les réglages, l'historique et le cache des taux sont stockés dans `%APPDATA%\C
 
 ## Lancer depuis les sources
 
-Il faut Python 3.11 ou plus récent (avec Tkinter, inclus dans l'installeur officiel de python.org).
+Il faut Python 3.11 ou plus récent.
 
 ```bash
 pip install -r requirements.txt
@@ -70,12 +70,14 @@ Le fichier est créé dans `dist\CalculatricePro.exe`.
 ```
 main.py                     point d'entrée (et auto-test --self-test)
 calculatrice/
-  app.py                    fenêtre principale et barre latérale
+  app.py                    fenêtre principale, barre latérale, thème, tâches en arrière-plan
   storage.py                réglages et dossier de données
   core/evaluator.py         analyse et calcul des expressions (sans eval)
   core/units.py             unités et conversions
   core/currency.py          taux de change : API, cache, historique
-  ui/                       vues CustomTkinter (calculatrice, devises, unités, widgets)
-tests/                      tests unitaires (pytest)
+  core/search.py            recherche sans accents dans les listes
+  ui/widgets.py             widgets animés (boutons, sélecteurs, graphique, transitions)
+  ui/                       pages Qt (calculatrice, devises, unités) et thème
+tests/                      tests unitaires et tests de l'interface (pytest)
 tools/make_icon.py          génération de l'icône
 ```

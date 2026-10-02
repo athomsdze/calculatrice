@@ -219,9 +219,9 @@ HISTORY_PERIODS = {"1S": 7, "1M": 30, "3M": 91, "6M": 182, "1A": 365}
 
 
 class CurrencyService:
-    def __init__(self, cache_path: Path, fetch: FetchJson = http_get_json):
+    def __init__(self, cache_path: Path, fetch: FetchJson | None = None):
         self.cache_path = cache_path
-        self.fetch = fetch
+        self.fetch = fetch or http_get_json
         self._history_cache: dict[tuple[str, str, int], list[tuple[date, float]]] = {}
 
     # ---- taux du jour -------------------------------------------------
@@ -237,12 +237,10 @@ class CurrencyService:
         return RateTable(dict(FALLBACK_RATES), FALLBACK_DATE, "taux intégrés", offline=True)
 
     def fetch_latest(self) -> RateTable:
-        errors = []
         for provider in LATEST_PROVIDERS:
             try:
                 table = provider(self.fetch)
-            except Exception as exc:  # réseau, JSON, clé manquante...
-                errors.append(f"{provider.__name__}: {exc}")
+            except Exception:  # réseau, JSON, clé manquante... : source suivante
                 continue
             if len(table.rates) > 10:
                 write_json(self.cache_path, table.to_json())
