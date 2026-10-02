@@ -1,0 +1,62 @@
+name: Construire l'exécutable Windows
+
+on:
+  push:
+    branches: ["**"]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+
+      - name: Installer les dépendances
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: Tests unitaires
+        run: python -m pytest -q
+
+      - name: Construire CalculatricePro.exe
+        run: pyinstaller --noconfirm --clean CalculatricePro.spec
+
+      - name: Tester l'exécutable (ouverture de la fenêtre)
+        shell: pwsh
+        run: |
+          $report = Join-Path $env:RUNNER_TEMP "selftest.txt"
+          $p = Start-Process -FilePath "dist\CalculatricePro.exe" -ArgumentList "--self-test", "`"$report`"" -PassThru
+          $null = $p.Handle  # nécessaire pour lire ExitCode ensuite
+          if (-not $p.WaitForExit(180000)) { $p.Kill(); throw "Délai dépassé" }
+          if (Test-Path $report) { Get-Content $report }
+          if ($p.ExitCode -ne 0) { throw "Auto-test en échec (code $($p.ExitCode))" }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CalculatricePro-Windows
+          path: dist/CalculatricePro.exe
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: CalculatricePro-Windows
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: CalculatricePro.exe
+          generate_release_notes: true
